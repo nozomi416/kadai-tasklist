@@ -7,9 +7,18 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 @Entity
+@NamedQueries({
+    //以下の内容で検索（複数件の結果を取得）
+    @NamedQuery(
+            name = "getAllMessages",
+            query = "SELECT t FROM Task AS t ORDER BY t.id DESC"
+            )
+})
 @Table(name = "tasks")
 public class Task {
     @Id
