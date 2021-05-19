@@ -1,9 +1,12 @@
 package controllers;
 
+
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -12,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import models.Task;
 import utils.DButil;
+import validators.MessageValidator;
 
 /**
  * Servlet implementation class UpdateServlet
@@ -46,17 +50,29 @@ public class UpdateServlet extends HttpServlet {
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             t.setUpdated_at(currentTime);
 
-            //DB更新
-            em.getTransaction().begin();
-            em.getTransaction().commit();
-            request.getSession().setAttribute("flush", "更新が完了しました。");
-            em.close();
+            List<String> errors = MessageValidator.validate(t);
+            if(errors.size() > 0) {
+                em.close();
 
-            //セッションスコープ上の不要になったデータを削除
-            request.getSession().removeAttribute("task_id");
+                request.setAttribute("_token", request.getSession().getId());
+                request.setAttribute("task", t);
+                request.setAttribute("errors", errors);
 
-            //indexへリダイレクト
-            response.sendRedirect(request.getContextPath() + "/index");
+                RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/messages/edit.jsp");
+                rd.forward(request, response);
+            } else {
+                //DB更新
+                em.getTransaction().begin();
+                em.getTransaction().commit();
+                request.getSession().setAttribute("flush", "更新が完了しました。");
+                em.close();
+
+                //セッションスコープ上の不要になったデータを削除
+                request.getSession().removeAttribute("task_id");
+
+                //indexへリダイレクト
+                response.sendRedirect(request.getContextPath() + "/index");
+            }
         }
     }
 }
