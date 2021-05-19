@@ -35,12 +35,27 @@ public class IndexServlet extends HttpServlet {
         //DB操作のために呼び出し
         EntityManager em = DButil.createEntityManager();
 
-        //クエリ検索、結果を代入
-        List<Task> tasks = em.createNamedQuery("getAllMessages", Task.class).getResultList();
+        //開くページを取得
+        int page = 1;
+        try {
+            page = Integer.parseInt(request.getParameter("page"));
+        } catch (NumberFormatException e) {}
+
+        //最大件数と開始位置を指定、メッセージを取得
+        List<Task> tasks = em.createNamedQuery("getAllMessages", Task.class)
+                                .setFirstResult(10 * (page - 1))
+                                .setMaxResults(10)
+                                .getResultList();
+
+        //全件数
+        long tasks_count = (long)em.createNamedQuery("getTasksCount", Long.class)
+                                .getSingleResult();
 
         em.close();
 
         request.setAttribute("tasks", tasks);
+        request.setAttribute("tasks_count", tasks_count);
+        request.setAttribute("page", page);
 
         //フラッシュメッセージがセッションスコープにセットされていたら
         if(request.getSession().getAttribute("flush") != null) {
